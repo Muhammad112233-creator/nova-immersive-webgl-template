@@ -1,0 +1,21 @@
+{
+  "name": "nova-immersive-webgl-template",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "An immersive, scroll-driven WebGL storytelling template: five chapters, cinematic gates, custom cursor, procedural audio and a full HUD.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "assets": "python3 tools/gen_assets.py"
+  },
+  "dependencies": {
+    "gsap": "^3.12.5",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>NOVA — An Immersive Scroll-Driven WebGL Template</title>
+    <meta
+      name="description"
+      content="NOVA is a production-ready template for immersive, scroll-driven WebGL storytelling: five chapters, cinematic gates, custom cursor, procedural audio and a full HUD."
+    />
+    <link
+      rel="canonical"
+      href="https://example.github.io/nova-immersive-webgl-template/"
+    />
+    <meta name="theme-color" content="#121636" />
+
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light" />
+    <meta name="darkreader-lock" />
+
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://example.github.io/nova-immersive-webgl-template/"
+    />
+    <meta
+      property="og:title"
+      content="NOVA — An Immersive Scroll-Driven WebGL Template"
+    />
+    <meta
+      property="og:description"
+      content="Five chapters, cinematic gates, custom cursor, procedural audio and a full HUD. Open source, zero licensed assets."
+    />
+    <meta property="og:image" content="assets/brand/og_image.jpg" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="1080" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="NOVA — An Immersive Scroll-Driven WebGL Template"
+    />
+    <meta
+      name="twitter:description"
+      content="Five chapters, cinematic gates, custom cursor, procedural audio and a full HUD."
+    />
+    <meta name="twitter:image" content="assets/brand/og_image.jpg" />
+
+    <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg" />
+    <link rel="icon" type="image/png" href="assets/brand/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600&family=Newsreader:wght@400;500&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ===================================================================
+         Critical, inline, pre-bundle styles.
+
+         The one job here is: never show a white flash. The page paints the
+         brand gradient on the very first layout, behind a transparent WebGL
+         canvas, so the handoff from DOM to GL is seamless.
+         =================================================================== */
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        background-color: #121636; /* base — never a white pre-paint */
+      }
+
+      /* The gradient lives on a dedicated fixed div BEHIND the canvas
+         (z 0 < canvas z 1). It mirrors the procedural gradient the WebGL
+         background pass draws, so it shows through the transparent canvas
+         during boot and is then covered seamlessly by the GL version.
+
+         Why fixed and not on <body>: position:fixed inset:0 is sized to the
+         viewport from the first layout, independent of document flow, so it
+         paints immediately. */
+      #bg-gradient {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-color: #121636;
+        background-image: radial-gradient(
+          ellipse 126.7vw 143.4vh at 50% 130%,
+          rgb(226, 232, 255) 15.855%,
+          rgb(196, 206, 246) 26.169%,
+          rgb(163, 176, 234) 36.483%,
+          rgb(128, 143, 219) 46.797%,
+          rgb(96, 111, 198) 57.111%,
+          rgb(52, 62, 126) 78.555%,
+          rgb(18, 22, 54) 100%
+        );
+      }
+
+      /* Placeholder counter painted on the first layout so the bottom-left
+         "99" is already there while WebGL boots. Uses svh (small viewport)
+         units, NOT vh: the canvas counter sizes from window.innerHeight,
+         which on phones equals the small viewport while the URL bar shows —
+         plain vh would render bigger/lower than the canvas version and the
+         mismatch reads as the number being clipped. */
+      #pre-canvas-99 {
+        position: fixed;
+        left: 2.0833vw; /* 40 / 1920 */
+        bottom: 3.7037vh; /* 40 / 1080 (fallback) */
+        bottom: 3.7037svh;
+        z-index: 0;
+        pointer-events: none;
+        user-select: none;
+        font:
+          700 16.667vh/1 "Space Mono",
+          monospace; /* 180 / 1080 */
+        font-size: 16.667svh;
+        color: #ffffff;
+      }
+      @media (max-width: 767px) {
+        #pre-canvas-99 {
+          left: 4.1667vw; /* 80 / 1920 */
+          font-size: 10.185vh; /* 110 / 1080 (fallback) */
+          font-size: 10.185svh;
+        }
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: transparent;
+      }
+      #webgl {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: auto;
+        touch-action: none;
+      }
+      #ui-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      /* Shown only if JS is unavailable. */
+      .noscript-note {
+        position: fixed;
+        inset: auto 0 0 0;
+        padding: 18px 24px;
+        background: #121636;
+        color: #e2e8ff;
+        font:
+          400 15px/1.5 system-ui,
+          sans-serif;
+        text-align: center;
+        z-index: 9999;
+      }
+    </style>
+  </head>
+
+  <body class="webgl-loader-overlay">
+    <div id="bg-gradient" aria-hidden="true"></div>
+    <div id="pre-canvas-99" aria-hidden="true">99</div>
+
+    <canvas
+      id="webgl"
+      role="img"
+      aria-label="NOVA interactive 3D experience"
+    ></canvas>
+    <div id="ui-container" role="region" aria-label="Interface controls"></div>
+
+    <noscript>
+      <p class="noscript-note">
+        NOVA is an interactive WebGL experience and needs JavaScript enabled.
+      </p>
+    </noscript>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
